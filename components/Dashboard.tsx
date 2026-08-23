@@ -18,7 +18,13 @@ export default function Dashboard() {
   const [section, setSection] = useState("Dashboard");
   const [minRoi, setMinRoi] = useState(2);
   
-const opportunities = getDemoOpportunities();
+const [opportunities, setOpportunities] = useState<
+  Awaited<ReturnType<typeof getDemoOpportunities>>
+>([]);
+
+useEffect(() => {
+  getDemoOpportunities().then(setOpportunities);
+}, []);
 
 const filtered = opportunities.filter(
   (opportunity) => opportunity.roi >= minRoi
