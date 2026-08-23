@@ -70,7 +70,7 @@ export default function Dashboard() {
                 <tbody>{filtered.map((o) => (<tr key={o.id}className="border-b border-white/5 hover:bg-white/[.02]" >
                   <td className="p-4 font-medium">{o.event}</td>
                   <td className="p-4 text-slate-400">{o.market}</td>
-                  <td className="p-4 text-slate-400">{getBookmakerName(o.bookmakerId)}</td>
+                  <td className="p-4 text-slate-400"><div>{getBookmakerName(o.bookmakerId)}</div><div className="text-xs text-slate-500">{getExchangeName(o.exchangeId)}</div></td>
                   <td className="p-4 text-right">{o.backOdds.toFixed(2)}</td>
                   <td className="p-4 text-right">{o.layOdds.toFixed(2)}</td>
                   <td className="p-4 text-right text-emerald-400">
