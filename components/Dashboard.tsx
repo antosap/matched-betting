@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BarChart3, Calculator, CircleDollarSign, LayoutDashboard, ListChecks, Settings, Wallet, Search, RefreshCw, ShieldCheck } from "lucide-react";
 import MatchedBetCalculator from "@/components/calculator/MatchedBetCalculator";
 import { getDemoOpportunities } from "@/lib/providers/opportunityProvider";
