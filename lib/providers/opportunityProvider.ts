@@ -1,6 +1,6 @@
 import { calculateOpportunity } from "@/lib/matchedBetting/opportunityCalculator";
 import { getDemoQuotes } from "./demoProvider";
-
+import { matchedBettingConfig } from "@/lib/config/matchedBetting";
 export function getDemoOpportunities() {
   const quotes = getDemoQuotes();
 
@@ -16,7 +16,7 @@ export function getDemoOpportunities() {
       if (!lay.exchangeId) continue;
       if (back.exchangeId) continue;
 
-      const opportunity = calculateOpportunity(back, lay, 2);
+      const opportunity = calculateOpportunity(   back,   lay,   matchedBettingConfig.defaultExchangeCommissionPct,   matchedBettingConfig.defaultBackStake );
 
       if (opportunity) {
         opportunities.push(opportunity);
