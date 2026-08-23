@@ -12,7 +12,7 @@ export const demoOpportunities: Opportunity[] = [
     roi: 2.06,
     estimatedProfit: 2.06,
     available: true,
-    updatedAt: new Date().toISOString(),
+    updatedAt: "2026-08-23T12:00:00Z",
   },
   {
     id: "OP-002",
@@ -25,7 +25,7 @@ export const demoOpportunities: Opportunity[] = [
     roi: 2.91,
     estimatedProfit: 2.91,
     available: true,
-    updatedAt: new Date().toISOString(),
+    updatedAt: "2026-08-23T12:00:00Z",
   },
   {
     id: "OP-003",
@@ -38,7 +38,7 @@ export const demoOpportunities: Opportunity[] = [
     roi: 1.74,
     estimatedProfit: 1.74,
     available: true,
-    updatedAt: new Date().toISOString(),
+    updatedAt: "2026-08-23T12:00:00Z",
   },
   {
     id: "OP-004",
@@ -51,6 +51,6 @@ export const demoOpportunities: Opportunity[] = [
     roi: 2.38,
     estimatedProfit: 2.38,
     available: true,
-    updatedAt: new Date().toISOString(),
+    updatedAt: "2026-08-23T12:00:00Z",
   },
 ];
