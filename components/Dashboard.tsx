@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { BarChart3, Calculator, CircleDollarSign, LayoutDashboard, ListChecks, Settings, Wallet, Search, RefreshCw, ShieldCheck } from "lucide-react";
 import MatchedBetCalculator from "@/components/calculator/MatchedBetCalculator";
-import { demoOpportunities } from "@/lib/data/demoOpportunities";
+import { getDemoOpportunities } from "@/lib/providers/opportunityProvider";
 import {
   getBookmakerName,
   getExchangeName,
@@ -18,9 +18,11 @@ export default function Dashboard() {
   const [section, setSection] = useState("Dashboard");
   const [minRoi, setMinRoi] = useState(2);
   
-  const filtered = demoOpportunities.filter(
-    (opportunity) => opportunity.roi >= minRoi
-  );
+const opportunities = getDemoOpportunities();
+
+const filtered = opportunities.filter(
+  (opportunity) => opportunity.roi >= minRoi
+);
 
   return (
     <main className="min-h-screen flex">
