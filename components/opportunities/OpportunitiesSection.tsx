@@ -1,5 +1,6 @@
 "use client";
-
+import { saveOperation } from "@/lib/storage/operations";
+import type { Operation } from "@/lib/types/operation";
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { getDemoOpportunities } from "@/lib/providers/opportunityProvider";
@@ -28,7 +29,43 @@ export default function OpportunitiesSection() {
   const filtered = opportunities.filter(
     (opportunity) => opportunity.roi >= minRoi
   );
+  function registerOperation(opportunity: (typeof filtered)[number]) {
+  const backStake = 100;
 
+  const layStake =
+    (backStake * opportunity.backOdds) /
+    opportunity.layOdds;
+
+  const liability =
+    layStake * (opportunity.layOdds - 1);
+
+  const operation: Operation = {
+    id: `${opportunity.id}-${Date.now()}`,
+    createdAt: new Date().toISOString(),
+
+    event: opportunity.event,
+    market: opportunity.market,
+
+    bookmakerId: opportunity.bookmakerId,
+    exchangeId: opportunity.exchangeId,
+
+    backStake,
+    backOdds: opportunity.backOdds,
+
+    layStake,
+    layOdds: opportunity.layOdds,
+    liability,
+
+    estimatedProfit: opportunity.estimatedProfit,
+    roi: opportunity.roi,
+
+    status: "OPEN",
+  };
+
+  saveOperation(operation);
+
+  alert("Operazione registrata");
+}
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[.03] overflow-hidden">
       <div className="p-5 flex flex-wrap items-center justify-between gap-3 border-b border-white/10">
@@ -70,6 +107,7 @@ export default function OpportunitiesSection() {
                 <th className="text-right p-4">Lay</th>
                 <th className="text-right p-4">ROI</th>
                 <th className="text-right p-4">Profitto</th>
+                <th className="text-center p-4">Azione</th>
               </tr>
             </thead>
 
@@ -103,6 +141,14 @@ export default function OpportunitiesSection() {
 
                   <td className="p-4 text-right">
                     {eur(o.estimatedProfit)}
+                  </td>
+                  <td className="p-4 text-center">
+                    <button
+                      onClick={() => registerOperation(o)}
+                      className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium hover:bg-white/15"
+                    >
+                      Registra
+                    </button>
                   </td>
                 </tr>
               ))}
