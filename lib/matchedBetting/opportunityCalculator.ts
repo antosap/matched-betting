@@ -4,45 +4,55 @@ import type { Opportunity } from "@/lib/types/opportunity";
 export function calculateOpportunity(
   back: ProviderQuote,
   lay: ProviderQuote,
-  commissionPct: number
+  commissionPct: number,
+  backStake = 100
 ): Opportunity | null {
   if (back.odds <= 1 || lay.odds <= 1) {
     return null;
   }
 
-  if (back.eventId !== lay.eventId) {
+  if (
+    back.eventId !== lay.eventId ||
+    back.market !== lay.market ||
+    back.selection !== lay.selection
+  ) {
     return null;
   }
 
-  const layStake =
-    (back.odds / lay.odds) * 100;
+  if (!lay.exchangeId) {
+    return null;
+  }
 
-  const liability =
-    layStake * (lay.odds - 1);
+  const layStake = (backStake * back.odds) / lay.odds;
+  const liability = layStake * (lay.odds - 1);
 
-  const commission =
-    (layStake - 100) * (commissionPct / 100);
+  const grossProfit =
+    backStake * (back.odds - 1) - liability;
 
-  const profit =
-    100 - liability - commission;
+  const exchangeProfit = layStake - backStake;
+  const commission = exchangeProfit * (commissionPct / 100);
 
-  const roi =
-    (profit / 100) * 100;
+  const netProfit = Math.min(
+    grossProfit,
+    exchangeProfit - commission
+  );
 
-  if (profit <= 0) {
+  const roi = (netProfit / backStake) * 100;
+
+  if (netProfit <= 0) {
     return null;
   }
 
   return {
-    id: `${back.eventId}-${back.bookmakerId}-${lay.exchangeId ?? "exchange"}`,
+    id: `${back.eventId}-${back.bookmakerId}-${lay.exchangeId}`,
     event: back.event,
     market: back.market,
     bookmakerId: back.bookmakerId,
-    exchangeId: lay.exchangeId ?? "exchange-demo",
+    exchangeId: lay.exchangeId,
     backOdds: back.odds,
     layOdds: lay.odds,
     roi,
-    estimatedProfit: profit,
+    estimatedProfit: netProfit,
     available: true,
     updatedAt: new Date().toISOString(),
   };
