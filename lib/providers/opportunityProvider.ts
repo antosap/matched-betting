@@ -1,8 +1,8 @@
 import { calculateOpportunity } from "@/lib/matchedBetting/opportunityCalculator";
-import { getDemoQuotes } from "./demoProvider";
+import { demoProvider } from "./demoProvider";
 import { matchedBettingConfig } from "@/lib/config/matchedBetting";
-export function getDemoOpportunities() {
-  const quotes = getDemoQuotes();
+export async function getDemoOpportunities() {
+  const quotes = await demoProvider.getQuotes();
 
   const opportunities = [];
 
