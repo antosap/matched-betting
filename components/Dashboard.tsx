@@ -1,8 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { BarChart3, Calculator, CircleDollarSign, LayoutDashboard, ListChecks, Settings, Wallet, Search, RefreshCw, ShieldCheck } from "lucide-react";
 import MatchedBetCalculator from "@/components/calculator/MatchedBetCalculator";
-import { getDemoOpportunities } from "@/lib/providers/opportunityProvider";
 import OpportunitiesSection from "@/components/opportunities/OpportunitiesSection";
 import {
   getBookmakerName,
@@ -17,19 +16,8 @@ function eur(n: number) {
 }
 export default function Dashboard() {
   const [section, setSection] = useState("Dashboard");
-  const [minRoi, setMinRoi] = useState(2);
+
   
-const [opportunities, setOpportunities] = useState<
-  Awaited<ReturnType<typeof getDemoOpportunities>>
->([]);
-
-useEffect(() => {
-  getDemoOpportunities().then(setOpportunities);
-}, []);
-
-const filtered = opportunities.filter(
-  (opportunity) => opportunity.roi >= minRoi
-);
 
   return (
     <main className="min-h-screen flex">
@@ -64,7 +52,7 @@ const filtered = opportunities.filter(
                 ["Bankroll", eur(1000), Wallet],
                 ["Profitto", eur(47.32), CircleDollarSign],
                 ["ROI medio", "2,84%", BarChart3],
-                ["Opportunità", String(filtered.length), Search]
+                ["Opportunità", "—", Search]
               ].map(([t,v,I]: any)=><div className="rounded-2xl border border-white/10 bg-white/[.03] p-5" key={t}><I size={18} className="text-slate-400 mb-4"/><div className="text-xs text-slate-500">{t}</div><div className="text-2xl font-semibold mt-1">{v}</div></div>)}
             </div>
 
