@@ -8,10 +8,17 @@ export type CalculationInput = {
 export type CalculationResult = {
   layStake: number;
   liability: number;
+
   backWinProfit: number;
   backLoseProfit: number;
+
   guaranteedProfit: number;
   roiPct: number;
+
+  // Compatibility aliases for the current UI.
+  backProfitIfWin: number;
+  layProfitIfWin: number;
+  netProfit: number;
 };
 
 /**
@@ -68,10 +75,17 @@ export function calculateMatchedBet(
   return {
     layStake,
     liability,
+  
     backWinProfit,
     backLoseProfit,
+  
     guaranteedProfit,
     roiPct,
+  
+    // Compatibility aliases for the current UI.
+    backProfitIfWin: backWinProfit,
+    layProfitIfWin: backLoseProfit,
+    netProfit: guaranteedProfit,
   };
 }
 
