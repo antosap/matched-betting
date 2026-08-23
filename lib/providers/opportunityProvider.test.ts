@@ -10,4 +10,11 @@ describe("getDemoOpportunities", () => {
     expect(opportunities[0].layOdds).toBeGreaterThan(1);
     expect(opportunities[0].roi).toBeGreaterThan(0);
   });
+
+  it("uses the configured exchange commission", () => {
+    const opportunities = getDemoOpportunities();
+
+    expect(opportunities[0].exchangeId).toBe("exchange-demo");
+    expect(opportunities[0].estimatedProfit).toBeGreaterThan(0);
+  });
 });
