@@ -9,7 +9,8 @@ export type MatchedOpportunity = {
 
   bookmakerQuote: ProviderQuote;
   exchangeQuote: ProviderQuote;
-
+  bookmakerId: string;
+  exchangeId: string;
   backOdds: number;
   layOdds: number;
 
@@ -105,17 +106,20 @@ export function findMatchedOpportunities(
 
       opportunities.push({
         id: `${bookmaker.eventId}-${bookmaker.market}-${bookmaker.selection}-${bookmaker.bookmakerId}-${exchange.exchangeId}`,
+      
         eventId: bookmaker.eventId,
         event: bookmaker.event,
         market: bookmaker.market,
         selection: bookmaker.selection,
-
+      
         bookmakerQuote: bookmaker,
         exchangeQuote: exchange,
-
+      
+        bookmakerId: bookmaker.bookmakerId,
+        exchangeId: exchange.exchangeId!,
+      
         backOdds: bookmaker.odds,
         layOdds: exchange.odds,
-
         backStake,
         layStake,
         liability,
