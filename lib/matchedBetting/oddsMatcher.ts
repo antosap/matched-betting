@@ -1,6 +1,7 @@
 import type { ProviderQuote } from "@/lib/providers/types";
 
 export type MatchedOpportunity = {
+  id: string;
   eventId: string;
   event: string;
   market: string;
@@ -103,6 +104,7 @@ export function findMatchedOpportunities(
       }
 
       opportunities.push({
+        id: `${bookmaker.eventId}-${bookmaker.market}-${bookmaker.selection}-${bookmaker.bookmakerId}-${exchange.exchangeId}`,
         eventId: bookmaker.eventId,
         event: bookmaker.event,
         market: bookmaker.market,
