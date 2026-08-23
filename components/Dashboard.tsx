@@ -3,6 +3,10 @@ import { useState } from "react";
 import { BarChart3, Calculator, CircleDollarSign, LayoutDashboard, ListChecks, Settings, Wallet, Search, RefreshCw, ShieldCheck } from "lucide-react";
 import MatchedBetCalculator from "@/components/calculator/MatchedBetCalculator";
 import { demoOpportunities } from "@/lib/data/demoOpportunities";
+import {
+  getBookmakerName,
+  getExchangeName,
+} from "@/lib/data/bettingProviders";
 
 function eur(n: number) {
   return new Intl.NumberFormat("it-IT", {
@@ -66,7 +70,7 @@ export default function Dashboard() {
                 <tbody>{filtered.map((o) => (<tr key={o.id}className="border-b border-white/5 hover:bg-white/[.02]" >
                   <td className="p-4 font-medium">{o.event}</td>
                   <td className="p-4 text-slate-400">{o.market}</td>
-                  <td className="p-4 text-slate-400">{o.bookmakerId}</td>
+                  <td className="p-4 text-slate-400">{getBookmakerName(o.bookmakerId)}</td>
                   <td className="p-4 text-right">{o.backOdds.toFixed(2)}</td>
                   <td className="p-4 text-right">{o.layOdds.toFixed(2)}</td>
                   <td className="p-4 text-right text-emerald-400">
