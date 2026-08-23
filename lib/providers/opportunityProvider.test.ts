@@ -3,7 +3,7 @@ import { getDemoOpportunities } from "./opportunityProvider";
 
 describe("getDemoOpportunities", () => {
   it("generates opportunities from provider quotes", () => {
-    const opportunities = getDemoOpportunities();
+    const opportunities = await getDemoOpportunities();
 
     expect(opportunities.length).toBeGreaterThan(0);
     expect(opportunities[0].backOdds).toBeGreaterThan(1);
@@ -12,7 +12,7 @@ describe("getDemoOpportunities", () => {
   });
 
   it("uses the configured exchange commission", () => {
-    const opportunities = getDemoOpportunities();
+    const opportunities = await getDemoOpportunities();
 
     expect(opportunities[0].exchangeId).toBe("exchange-demo");
     expect(opportunities[0].estimatedProfit).toBeGreaterThan(0);
