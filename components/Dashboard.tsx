@@ -1,8 +1,7 @@
 "use client";
-
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { BarChart3, Calculator, CircleDollarSign, LayoutDashboard, ListChecks, Settings, Wallet, Search, RefreshCw, ShieldCheck } from "lucide-react";
-import { calculateMatchedBet } from "@/lib/matchedBetting";
+import MatchedBetCalculator from "@/components/calculator/MatchedBetCalculator";
 
 const opportunities = [
   { id: "OP-001", event: "Milan – Roma", market: "1X2", bookmaker: "Bookmaker A", back: 2.10, lay: 2.04, roi: 2.06, profit: 2.06 },
@@ -16,16 +15,7 @@ function eur(n:number) { return new Intl.NumberFormat("it-IT",{style:"currency",
 export default function Dashboard() {
   const [section, setSection] = useState("Dashboard");
   const [minRoi, setMinRoi] = useState(2);
-  const [backOdds, setBackOdds] = useState(2.1);
-  const [layOdds, setLayOdds] = useState(2.04);
-  const [stake, setStake] = useState(100);
-  const [commission, setCommission] = useState(2);
-
-  const result = useMemo(() => {
-    try { return calculateMatchedBet({backOdds, layOdds, backStake: stake, commissionPct: commission}); }
-    catch { return null; }
-  }, [backOdds, layOdds, stake, commission]);
-
+  
   const filtered = opportunities.filter(x => x.roi >= minRoi);
 
   return (
@@ -78,24 +68,7 @@ export default function Dashboard() {
             </div>
           </>}
 
-          {section === "Calcolatore" && <div className="max-w-4xl">
-            <h1 className="text-2xl font-semibold mb-2">Calcolatore Back / Lay</h1><p className="text-sm text-slate-500 mb-6">Motore locale di simulazione. Verificheremo le formule prima di collegare dati reali.</p>
-            <div className="grid lg:grid-cols-2 gap-4">
-              <div className="rounded-2xl border border-white/10 bg-white/[.03] p-5 space-y-4">
-                {[
-                  ["Quota Back", backOdds, setBackOdds], ["Quota Lay", layOdds, setLayOdds], ["Stake Back (€)", stake, setStake], ["Commissione (%)", commission, setCommission]
-                ].map(([label,val,setter]: any)=><label key={label} className="block text-sm text-slate-400">{label}<input type="number" step="0.01" value={val} onChange={e=>setter(Number(e.target.value))} className="mt-1 w-full bg-black/20 border border-white/10 rounded-xl px-3 py-3 text-white outline-none focus:border-emerald-400/50"/></label>)}
-              </div>
-              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/5 p-5">
-                <div className="text-xs uppercase tracking-widest text-emerald-400 mb-5">Risultato</div>
-                {result && <div className="space-y-3 text-sm">
-                  <Row label="Lay stake" value={eur(result.layStake)}/><Row label="Liability" value={eur(result.liability)}/><Row label="Scenario Back" value={eur(result.backProfitIfWin)}/><Row label="Scenario Lay" value={eur(result.layProfitIfWin)}/>
-                  <div className="border-t border-white/10 pt-4 mt-4"><Row label="Profitto stimato" value={eur(result.netProfit)} strong/><Row label="ROI" value={`${result.roiPct.toFixed(2)}%`} strong/></div>
-                </div>}
-              </div>
-            </div>
-          </div>}
-
+          {section === "Calcolatore" && <MatchedBetCalculator />}
           {section !== "Dashboard" && section !== "Calcolatore" && <div className="rounded-2xl border border-white/10 bg-white/[.03] p-8"><h1 className="text-2xl font-semibold mb-2">{section}</h1><p className="text-slate-500">Sezione predisposta nell'MVP. La collegheremo ai dati persistenti e alle API nella fase successiva.</p></div>}
         </div>
       </section>
