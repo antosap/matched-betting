@@ -68,30 +68,7 @@ const filtered = opportunities.filter(
               ].map(([t,v,I]: any)=><div className="rounded-2xl border border-white/10 bg-white/[.03] p-5" key={t}><I size={18} className="text-slate-400 mb-4"/><div className="text-xs text-slate-500">{t}</div><div className="text-2xl font-semibold mt-1">{v}</div></div>)}
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/[.03] overflow-hidden">
-              <div className="p-5 flex flex-wrap items-center justify-between gap-3 border-b border-white/10">
-                <div><h2 className="font-semibold">Opportunità</h2><p className="text-xs text-slate-500 mt-1">Dati demo per validare il motore. API reali non ancora collegate.</p></div>
-                <label className="text-xs text-slate-400 flex items-center gap-2">ROI min
-                  <input type="number" step="0.1" value={minRoi} onChange={e=>setMinRoi(Number(e.target.value))} className="w-20 bg-black/20 border border-white/10 rounded-lg px-2 py-1.5 text-white"/>
-                </label>
-              </div>
-              <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="text-xs text-slate-500"><tr className="border-b border-white/10"><th className="text-left p-4">Evento</th><th className="text-left p-4">Mercato</th><th className="text-left p-4">Bookmaker</th><th className="text-right p-4">Back</th><th className="text-right p-4">Lay</th><th className="text-right p-4">ROI</th><th className="text-right p-4">Profitto</th></tr></thead>
-                <tbody>{filtered.map((o) => (<tr key={o.id}className="border-b border-white/5 hover:bg-white/[.02]" >
-                  <td className="p-4 font-medium">{o.event}</td>
-                  <td className="p-4 text-slate-400">{o.market}</td>
-                  <td className="p-4 text-slate-400"><div>{getBookmakerName(o.bookmakerId)}</div><div className="text-xs text-slate-500">{getExchangeName(o.exchangeId)}</div></td>
-                  <td className="p-4 text-right">{o.backOdds.toFixed(2)}</td>
-                  <td className="p-4 text-right">{o.layOdds.toFixed(2)}</td>
-                  <td className="p-4 text-right text-emerald-400">
-                    {o.roi.toFixed(2)}%
-                  </td> 
-                  <td className="p-4 text-right">{eur(o.estimatedProfit)}
-                  </td>
-                </tr>
-                ))}
-              </tbody>
-              </table></div>
-            </div>
+            <OpportunitiesSection />
           </>}
 
           {section === "Calcolatore" && <MatchedBetCalculator />}
