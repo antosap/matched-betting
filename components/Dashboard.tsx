@@ -2,21 +2,21 @@
 import { useState } from "react";
 import { BarChart3, Calculator, CircleDollarSign, LayoutDashboard, ListChecks, Settings, Wallet, Search, RefreshCw, ShieldCheck } from "lucide-react";
 import MatchedBetCalculator from "@/components/calculator/MatchedBetCalculator";
+import { demoOpportunities } from "@/lib/data/demoOpportunities";
 
-const opportunities = [
-  { id: "OP-001", event: "Milan – Roma", market: "1X2", bookmaker: "Bookmaker A", back: 2.10, lay: 2.04, roi: 2.06, profit: 2.06 },
-  { id: "OP-002", event: "Napoli – Inter", market: "1X2", bookmaker: "Bookmaker B", back: 2.35, lay: 2.27, roi: 2.91, profit: 2.91 },
-  { id: "OP-003", event: "Juventus – Lazio", market: "Over 2.5", bookmaker: "Bookmaker C", back: 1.95, lay: 1.91, roi: 1.74, profit: 1.74 },
-  { id: "OP-004", event: "Atalanta – Torino", market: "Under 3.5", bookmaker: "Bookmaker A", back: 1.72, lay: 1.67, roi: 2.38, profit: 2.38 }
-];
-
-function eur(n:number) { return new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).format(n); }
-
+function eur(n: number) {
+  return new Intl.NumberFormat("it-IT", {
+    style: "currency",
+    currency: "EUR",
+  }).format(n);
+}
 export default function Dashboard() {
   const [section, setSection] = useState("Dashboard");
   const [minRoi, setMinRoi] = useState(2);
   
-  const filtered = opportunities.filter(x => x.roi >= minRoi);
+  const filtered = demoOpportunities.filter(
+    (opportunity) => opportunity.roi >= minRoi
+  );
 
   return (
     <main className="min-h-screen flex">
@@ -63,7 +63,24 @@ export default function Dashboard() {
                 </label>
               </div>
               <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="text-xs text-slate-500"><tr className="border-b border-white/10"><th className="text-left p-4">Evento</th><th className="text-left p-4">Mercato</th><th className="text-left p-4">Bookmaker</th><th className="text-right p-4">Back</th><th className="text-right p-4">Lay</th><th className="text-right p-4">ROI</th><th className="text-right p-4">Profitto</th></tr></thead>
-                <tbody>{filtered.map(o=><tr key={o.id} className="border-b border-white/5 hover:bg-white/[.02]"><td className="p-4 font-medium">{o.event}</td><td className="p-4 text-slate-400">{o.market}</td><td className="p-4 text-slate-400">{o.bookmaker}</td><td className="p-4 text-right">{o.back.toFixed(2)}</td><td className="p-4 text-right">{o.lay.toFixed(2)}</td><td className="p-4 text-right text-emerald-400">{o.roi.toFixed(2)}%</td><td className="p-4 text-right">{eur(o.profit)}</td></tr>)}</tbody>
+                <tbody>{filtered.map((o) => (<tr
+      key={o.id}
+      className="border-b border-white/5 hover:bg-white/[.02]"
+    >
+      <td className="p-4 font-medium">{o.event}</td>
+      <td className="p-4 text-slate-400">{o.market}</td>
+      <td className="p-4 text-slate-400">{o.bookmakerId}</td>
+      <td className="p-4 text-right">{o.backOdds.toFixed(2)}</td>
+      <td className="p-4 text-right">{o.layOdds.toFixed(2)}</td>
+      <td className="p-4 text-right text-emerald-400">
+        {o.roi.toFixed(2)}%
+      </td>
+      <td className="p-4 text-right">
+        {eur(o.estimatedProfit)}
+      </td>
+    </tr>
+  ))}
+</tbody>
               </table></div>
             </div>
           </>}
