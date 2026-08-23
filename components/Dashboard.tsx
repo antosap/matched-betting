@@ -3,6 +3,7 @@ import { useState } from "react";
 import { BarChart3, Calculator, CircleDollarSign, LayoutDashboard, ListChecks, Settings, Wallet, Search, RefreshCw, ShieldCheck } from "lucide-react";
 import MatchedBetCalculator from "@/components/calculator/MatchedBetCalculator";
 import OpportunitiesSection from "@/components/opportunities/OpportunitiesSection";
+import BankrollSection from "@/components/bankroll/BankrollSection";
 import OperationsSection from "@/components/operations/OperationsSection";
 import {
   getBookmakerName,
@@ -62,10 +63,12 @@ export default function Dashboard() {
           {section === "Opportunità" && <OpportunitiesSection />}
           {section === "Calcolatore" && <MatchedBetCalculator />}
           {section === "Operazioni" && <OperationsSection />}
+          {section === "Bankroll" && <BankrollSection />}
           {section !== "Dashboard" &&
            section !== "Opportunità" &&
            section !== "Operazioni" &&
            section !== "Calcolatore" && 
+            section !== "Bankroll" &&
             (
             <div className="rounded-2xl border border-white/10 bg-white/[.03] p-8">
               <h1 className="text-2xl font-semibold mb-2">{section}</h1>
