@@ -59,9 +59,8 @@ export default function Dashboard() {
             <OpportunitiesSection />
           </>}
 
-          {section === "Calcolatore" && <MatchedBetCalculator />}
-          {section !== "Dashboard" && section !== "Calcolatore" && <div className="rounded-2xl border border-white/10 bg-white/[.03] p-8"><h1 className="text-2xl font-semibold mb-2">{section}</h1><p className="text-slate-500">Sezione predisposta nell'MVP. La collegheremo ai dati persistenti e alle API nella fase successiva.</p></div>}
-        </div>
+          {section === "Opportunità" && <OpportunitiesSection />} {section === "Calcolatore" && <MatchedBetCalculator />}  {section !== "Dashboard" &&  section !== "Opportunità" &&  section !== "Calcolatore" && (   <div className="rounded-2xl border border-white/10 bg-white/[.03] p-8">     <h1 className="text-2xl font-semibold mb-2">{section}</h1>     <p className="text-slate-500">       Sezione predisposta nell'MVP. La collegheremo ai dati persistenti e alle API nella fase successiva.     </p>   </div> )}
+          </div>
       </section>
     </main>
   );
