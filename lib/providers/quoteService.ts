@@ -21,9 +21,7 @@ export async function getLiveQuotes(): Promise<{
 
   return {
     providerId: results.map((item) => item.provider.id).join(","),
-    providerName: results
-      .map((item) => item.provider.name)
-      .join(", "),
+    providerName: results.map((item) => item.provider.name).join(" + "),
     quotes: results.flatMap((item) => item.quotes),
   };
 }

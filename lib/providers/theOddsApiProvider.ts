@@ -29,70 +29,79 @@ type OddsApiEvent = {
   bookmakers: OddsApiBookmaker[];
 };
 
+function canonical(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\bvs?\.?\b/g, " ")
+    .replace(/\bversus\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function eventKey(event: OddsApiEvent): string {
+  return [
+    canonical(event.home_team),
+    canonical(event.away_team),
+  ].join("|");
+}
+
+function selectionKey(outcome: string, event: OddsApiEvent): string {
+  const value = canonical(outcome);
+  const home = canonical(event.home_team);
+  const away = canonical(event.away_team);
+
+  if (value === "draw" || value === "the draw" || value === "x") {
+    return "draw";
+  }
+  if (value === home) return "home";
+  if (value === away) return "away";
+
+  return value;
+}
+
 function decimalPrice(price: number): number | null {
-  // The Odds API is requested with oddsFormat=decimal.
   if (!Number.isFinite(price) || price <= 1) return null;
   return price;
 }
 
-export function normalizeTheOddsApiResponse(
-  events: OddsApiEvent[]
-): ProviderQuote[] {
+/**
+ * The Odds API is a bookmaker aggregator for this application.
+ * It is intentionally used ONLY for BACK prices.
+ *
+ * Do not infer LAY prices from bookmaker/aggregator data. Exchange LAY
+ * quotes are supplied by the dedicated Betfair Exchange adapter.
+ */
+export function normalizeTheOddsApiResponse(events: OddsApiEvent[]): ProviderQuote[] {
   const quotes: ProviderQuote[] = [];
 
   for (const event of events) {
     for (const bookmaker of event.bookmakers ?? []) {
       for (const market of bookmaker.markets ?? []) {
-        const side =
-          market.key === "h2h_lay" ||
-          market.key === "outrights_lay"
-            ? "LAY"
-            : market.key === "h2h" ||
-              market.key === "outrights"
-            ? "BACK"
-            : null;
-
-        if (!side) continue;
+        if (market.key !== "h2h") continue;
 
         for (const outcome of market.outcomes ?? []) {
           const odds = decimalPrice(outcome.price);
           if (odds === null) continue;
 
           quotes.push({
-            id: [
-              event.id,
-              bookmaker.key,
-              market.key,
-              outcome.name,
-            ].join(":"),
+            id: [event.id, bookmaker.key, market.key, outcome.name].join(":"),
             eventId: event.id,
+            eventKey: eventKey(event),
             event: `${event.home_team} - ${event.away_team}`,
             sport: event.sport_title || event.sport_key,
             startTime: event.commence_time,
-            market:
-              market.key === "h2h" ||
-              market.key === "h2h_lay"
-                ? "1X2"
-                : market.key,
+            market: "1X2",
             selection: outcome.name,
-            side,
+            selectionKey: selectionKey(outcome.name, event),
+            side: "BACK",
             odds,
-
-            ...(side === "BACK"
-              ? {
-                  bookmakerId: bookmaker.key,
-                  bookmakerName: bookmaker.title,
-                }
-              : {
-                  exchangeId: bookmaker.key,
-                  exchangeName: bookmaker.title,
-                }),
-
+            bookmakerId: bookmaker.key,
+            bookmakerName: bookmaker.title,
             timestamp:
               market.last_update ||
               bookmaker.last_update ||
               new Date().toISOString(),
-
             sourceProviderId: "the-odds-api",
           });
         }
@@ -106,7 +115,7 @@ export function normalizeTheOddsApiResponse(
 export function createTheOddsApiProvider(): BettingProvider {
   return {
     id: "the-odds-api",
-    name: "The Odds API",
+    name: "The Odds API · bookmaker BACK",
     kind: "AGGREGATOR",
 
     async getQuotes(signal) {
@@ -120,9 +129,7 @@ export function createTheOddsApiProvider(): BettingProvider {
       }
 
       const url = new URL(
-        `https://api.the-odds-api.com/v4/sports/${encodeURIComponent(
-          sport
-        )}/odds`
+        `https://api.the-odds-api.com/v4/sports/${encodeURIComponent(sport)}/odds`
       );
 
       url.searchParams.set("apiKey", apiKey);
@@ -132,10 +139,7 @@ export function createTheOddsApiProvider(): BettingProvider {
       url.searchParams.set("dateFormat", "iso");
 
       if (process.env.MATCHBET_ODDS_API_BOOKMAKERS) {
-        url.searchParams.set(
-          "bookmakers",
-          process.env.MATCHBET_ODDS_API_BOOKMAKERS
-        );
+        url.searchParams.set("bookmakers", process.env.MATCHBET_ODDS_API_BOOKMAKERS);
       }
 
       const response = await fetch(url, {
@@ -148,21 +152,16 @@ export function createTheOddsApiProvider(): BettingProvider {
       if (!response.ok) {
         const body = await response.text().catch(() => "");
         throw new Error(
-          `the-odds-api: HTTP ${response.status}${
-            body ? ` ${body.slice(0, 300)}` : ""
-          }`
+          `the-odds-api: HTTP ${response.status}${body ? ` ${body.slice(0, 300)}` : ""}`
         );
       }
 
       const payload = (await response.json()) as unknown;
-
       if (!Array.isArray(payload)) {
         throw new Error("the-odds-api: invalid response");
       }
 
-      return normalizeTheOddsApiResponse(
-        payload as OddsApiEvent[]
-      );
+      return normalizeTheOddsApiResponse(payload as OddsApiEvent[]);
     },
   };
 }
