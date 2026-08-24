@@ -4,22 +4,28 @@ export type MatchedOpportunity = {
   id: string;
   eventId: string;
   event: string;
+  sport?: string;
+  startTime?: string;
   market: string;
   selection: string;
 
   bookmakerQuote: ProviderQuote;
   exchangeQuote: ProviderQuote;
+
   bookmakerId: string;
+  bookmakerName: string;
   exchangeId: string;
+  exchangeName: string;
+
   backOdds: number;
   layOdds: number;
-
   backStake: number;
   layStake: number;
   liability: number;
 
   estimatedProfit: number;
   roi: number;
+  sourceTimestamp: string;
 };
 
 type MatcherConfig = {
@@ -35,13 +41,13 @@ const DEFAULT_CONFIG: MatcherConfig = {
 };
 
 function sameMarket(
-  bookmaker: ProviderQuote,
-  exchange: ProviderQuote
+  back: ProviderQuote,
+  lay: ProviderQuote
 ) {
   return (
-    bookmaker.eventId === exchange.eventId &&
-    bookmaker.market === exchange.market &&
-    bookmaker.selection === exchange.selection
+    back.eventId === lay.eventId &&
+    back.market === lay.market &&
+    back.selection === lay.selection
   );
 }
 
@@ -54,78 +60,100 @@ export function findMatchedOpportunities(
     ...config,
   };
 
+  const backs = quotes.filter(
+    (quote) =>
+      quote.side === "BACK" &&
+      Boolean(quote.bookmakerId)
+  );
+
+  const lays = quotes.filter(
+    (quote) =>
+      quote.side === "LAY" &&
+      Boolean(quote.exchangeId)
+  );
+
   const opportunities: MatchedOpportunity[] = [];
 
-  const bookmakerQuotes = quotes.filter(
-    (quote) => !quote.exchangeId
-  );
-
-  const exchangeQuotes = quotes.filter(
-    (quote) => Boolean(quote.exchangeId)
-  );
-
-  for (const bookmaker of bookmakerQuotes) {
-    for (const exchange of exchangeQuotes) {
-      if (!sameMarket(bookmaker, exchange)) {
+  for (const back of backs) {
+    for (const lay of lays) {
+      if (!sameMarket(back, lay)) {
         continue;
       }
 
-      if (bookmaker.odds <= 1 || exchange.odds <= 1) {
+      if (back.odds <= lay.odds) {
         continue;
       }
-
-      if (bookmaker.odds <= exchange.odds) {
-        continue;
-      }
-
-      const backStake = settings.backStake;
 
       const layStake =
-        (backStake * bookmaker.odds) /
-        exchange.odds;
+        (settings.backStake * back.odds) /
+        lay.odds;
 
       const liability =
-        layStake * (exchange.odds - 1);
+        layStake * (lay.odds - 1);
+
+      const layProfitBeforeCommission =
+        layStake - settings.backStake;
 
       const commission =
-        (layStake - backStake) *
+        layProfitBeforeCommission *
         (settings.exchangeCommissionPct / 100);
 
-      const estimatedProfit =
-        backStake *
-        (bookmaker.odds - 1) -
-        liability -
+      const backWinProfit =
+        settings.backStake * (back.odds - 1) -
+        liability;
+
+      const layWinProfit =
+        layProfitBeforeCommission -
         commission;
 
+      const estimatedProfit = Math.min(
+        backWinProfit,
+        layWinProfit
+      );
+
       const roi =
-        (estimatedProfit / backStake) * 100;
+        (estimatedProfit / settings.backStake) * 100;
 
       if (roi < settings.minimumRoiPct) {
         continue;
       }
 
       opportunities.push({
-        id: `${bookmaker.eventId}-${bookmaker.market}-${bookmaker.selection}-${bookmaker.bookmakerId}-${exchange.exchangeId}`,
-      
-        eventId: bookmaker.eventId,
-        event: bookmaker.event,
-        market: bookmaker.market,
-        selection: bookmaker.selection,
-      
-        bookmakerQuote: bookmaker,
-        exchangeQuote: exchange,
-      
-        bookmakerId: bookmaker.bookmakerId,
-        exchangeId: exchange.exchangeId!,
-      
-        backOdds: bookmaker.odds,
-        layOdds: exchange.odds,
-        backStake,
+        id: [
+          back.id,
+          lay.id,
+        ].join(":"),
+
+        eventId: back.eventId,
+        event: back.event,
+        sport: back.sport,
+        startTime: back.startTime,
+        market: back.market,
+        selection: back.selection,
+
+        bookmakerQuote: back,
+        exchangeQuote: lay,
+
+        bookmakerId: back.bookmakerId!,
+        bookmakerName:
+          back.bookmakerName || back.bookmakerId!,
+        exchangeId: lay.exchangeId!,
+        exchangeName:
+          lay.exchangeName || lay.exchangeId!,
+
+        backOdds: back.odds,
+        layOdds: lay.odds,
+        backStake: settings.backStake,
         layStake,
         liability,
 
         estimatedProfit,
         roi,
+
+        sourceTimestamp: [
+          back.timestamp,
+          lay.timestamp,
+        ].sort().at(-1) || back.timestamp,
       });
     }
   }

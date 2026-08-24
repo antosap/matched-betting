@@ -1,10 +1,5 @@
-import type { Exchange } from "@/lib/types/exchange";
-
-export const exchanges: Exchange[] = [
-  {
-    id: "exchange-demo",
-    name: "Exchange Demo",
-    commissionPct: 2,
-    enabled: true,
-  },
-];
+/**
+ * Provider data is intentionally not hardcoded.
+ * Exchange metadata is supplied by the quote provider.
+ */
+export {};

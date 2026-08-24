@@ -1,12 +1,51 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getLiveOpportunities } from "@/lib/providers/opportunityProvider";
 
-const opportunities = [
-  { id: "OP-001", event: "Milan – Roma", market: "1X2", bookmaker: "Bookmaker A", exchange: "Betfair", back: 2.10, lay: 2.04, roi: 2.06, profit: 2.06, liquidity: 840 },
-  { id: "OP-002", event: "Napoli – Inter", market: "1X2", bookmaker: "Bookmaker B", exchange: "Betfair", back: 2.35, lay: 2.27, roi: 2.91, profit: 2.91, liquidity: 620 },
-  { id: "OP-003", event: "Juventus – Lazio", market: "Over 2.5", bookmaker: "Bookmaker C", exchange: "Betfair", back: 1.95, lay: 1.91, roi: 1.74, profit: 1.74, liquidity: 430 },
-  { id: "OP-004", event: "Atalanta – Torino", market: "Under 3.5", bookmaker: "Bookmaker A", exchange: "Betfair", back: 1.72, lay: 1.67, roi: 2.38, profit: 2.38, liquidity: 510 }
-];
+export const dynamic = "force-dynamic";
 
-export async function GET() {
-  return NextResponse.json({ opportunities, mode: "simulation" });
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const backStake = Number(searchParams.get("stake") ?? "100");
+  const minRoi = Number(searchParams.get("minRoi") ?? "0");
+
+  if (!Number.isFinite(backStake) || backStake <= 0) {
+    return NextResponse.json(
+      { error: "Invalid stake" },
+      { status: 400 }
+    );
+  }
+
+  if (!Number.isFinite(minRoi)) {
+    return NextResponse.json(
+      { error: "Invalid minimum ROI" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const result = await getLiveOpportunities(backStake, minRoi);
+
+    return NextResponse.json(result, {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Provider request failed";
+
+    const status =
+      message === "QUOTE_PROVIDER_NOT_CONFIGURED" ? 503 : 502;
+
+    return NextResponse.json(
+      {
+        error:
+          status === 503
+            ? "Quote provider not configured"
+            : "Quote provider unavailable",
+        code: message,
+      },
+      { status }
+    );
+  }
 }

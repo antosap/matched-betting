@@ -1,150 +1,261 @@
 "use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { RefreshCw, Search } from "lucide-react";
 import { saveOperation } from "@/lib/storage/operations";
 import type { Operation } from "@/lib/types/operation";
-import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
-import { getDemoOpportunities } from "@/lib/providers/opportunityProvider";
-import {
-  getBookmakerName,
-  getExchangeName,
-} from "@/lib/data/bettingProviders";
+import type { MatchedOpportunity } from "@/lib/matchedBetting/oddsMatcher";
 
-function eur(n: number) {
-  return new Intl.NumberFormat("it-IT", {
+type ApiResponse = {
+  mode: "live";
+  providerId: string;
+  providerName: string;
+  retrievedAt: string;
+  quoteCount: number;
+  opportunities: MatchedOpportunity[];
+};
+
+const eur = (value: number) =>
+  new Intl.NumberFormat("it-IT", {
     style: "currency",
     currency: "EUR",
-  }).format(n);
-}
+  }).format(value);
 
 export default function OpportunitiesSection() {
-  const [minRoi, setMinRoi] = useState(2);
-  const [opportunities, setOpportunities] = useState<
-    Awaited<ReturnType<typeof getDemoOpportunities>>
-  >([]);
+  const [minRoi, setMinRoi] = useState(0);
+  const [stake, setStake] = useState(100);
+  const [data, setData] = useState<ApiResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `/api/opportunities?stake=${encodeURIComponent(
+          String(stake)
+        )}&minRoi=${encodeURIComponent(String(minRoi))}`,
+        { cache: "no-store" }
+      );
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        if (payload?.code === "QUOTE_PROVIDER_NOT_CONFIGURED") {
+          throw new Error(
+            "API quote non configurata. Imposta MATCHBET_QUOTES_API_URL su Vercel."
+          );
+        }
+
+        throw new Error(
+          payload?.error || "Provider quote non disponibile."
+        );
+      }
+
+      setData(payload as ApiResponse);
+    } catch (err) {
+      setData(null);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Errore durante il caricamento delle quote."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [stake, minRoi]);
 
   useEffect(() => {
-    getDemoOpportunities().then(setOpportunities);
-  }, []);
+    void load();
+  }, [load]);
 
-  const filtered = opportunities.filter(
-    (opportunity) => opportunity.roi >= minRoi
-  );
-  function registerOperation(opportunity: (typeof filtered)[number]) {
-  const backStake = 100;
+  function registerOperation(
+    opportunity: MatchedOpportunity
+  ) {
+    const operation: Operation = {
+      id: `${opportunity.id}-${Date.now()}`,
+      createdAt: new Date().toISOString(),
 
-  const layStake =
-    (backStake * opportunity.backOdds) /
-    opportunity.layOdds;
+      event: opportunity.event,
+      market: opportunity.market,
 
-  const liability =
-    layStake * (opportunity.layOdds - 1);
+      bookmakerId: opportunity.bookmakerId,
+      bookmakerName: opportunity.bookmakerName,
 
-  const operation: Operation = {
-    id: `${opportunity.id}-${Date.now()}`,
-    createdAt: new Date().toISOString(),
+      exchangeId: opportunity.exchangeId,
+      exchangeName: opportunity.exchangeName,
 
-    event: opportunity.event,
-    market: opportunity.market,
+      backStake: opportunity.backStake,
+      backOdds: opportunity.backOdds,
 
-    bookmakerId: opportunity.bookmakerId,
-    exchangeId: opportunity.exchangeId,
+      layStake: opportunity.layStake,
+      layOdds: opportunity.layOdds,
+      liability: opportunity.liability,
 
-    backStake,
-    backOdds: opportunity.backOdds,
+      estimatedProfit: opportunity.estimatedProfit,
+      roi: opportunity.roi,
 
-    layStake,
-    layOdds: opportunity.layOdds,
-    liability,
+      status: "OPEN",
+    };
 
-    estimatedProfit: opportunity.estimatedProfit,
-    roi: opportunity.roi,
+    saveOperation(operation);
+  }
 
-    status: "OPEN",
-  };
+  const opportunities = data?.opportunities ?? [];
 
-  saveOperation(operation);
-
-  alert("Operazione registrata");
-}
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[.03] overflow-hidden">
-      <div className="p-5 flex flex-wrap items-center justify-between gap-3 border-b border-white/10">
-        <div>
-          <h2 className="font-semibold">Opportunità</h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Opportunità disponibili
-          </p>
-        </div>
+      <div className="p-5 border-b border-white/10">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="font-semibold">
+              Opportunità live
+            </h2>
 
-        <label className="text-xs text-slate-400 flex items-center gap-2">
-          ROI min
-          <input
-            type="number"
-            step="0.1"
-            value={minRoi}
-            onChange={(e) => setMinRoi(Number(e.target.value))}
-            className="w-20 bg-black/20 border border-white/10 rounded-lg px-2 py-1.5 text-white"
-          />
-        </label>
-      </div>
-
-      <div className="overflow-x-auto">
-        {filtered.length === 0 ? (
-          <div className="p-10 text-center">
-            <Search className="mx-auto mb-3 text-slate-600" size={24} />
-            <p className="text-sm text-slate-400">
-              Nessuna opportunità disponibile
+            <p className="text-xs text-slate-500 mt-1">
+              Quote provenienti esclusivamente dal provider configurato.
             </p>
           </div>
-        ) : (
+
+          <button
+            onClick={() => void load()}
+            disabled={loading}
+            className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs disabled:opacity-50"
+          >
+            <RefreshCw
+              size={14}
+              className={loading ? "animate-spin" : ""}
+            />
+            Aggiorna
+          </button>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-3 max-w-md mt-5">
+          <label className="text-xs text-slate-400">
+            Stake Back (€)
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={stake}
+              onChange={(event) =>
+                setStake(Number(event.target.value))
+              }
+              className="mt-1 w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white"
+            />
+          </label>
+
+          <label className="text-xs text-slate-400">
+            ROI minimo (%)
+            <input
+              type="number"
+              step="0.1"
+              value={minRoi}
+              onChange={(event) =>
+                setMinRoi(Number(event.target.value))
+              }
+              className="mt-1 w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white"
+            />
+          </label>
+        </div>
+
+        {data && (
+          <div className="text-xs text-slate-600 mt-4">
+            {data.providerName} · {data.quoteCount} quote ·{" "}
+            {new Date(data.retrievedAt).toLocaleTimeString("it-IT")}
+          </div>
+        )}
+      </div>
+
+      {error ? (
+        <div className="p-10 text-center">
+          <p className="text-sm text-amber-300">
+            {error}
+          </p>
+        </div>
+      ) : opportunities.length === 0 ? (
+        <div className="p-10 text-center">
+          <Search
+            className="mx-auto mb-3 text-slate-600"
+            size={24}
+          />
+          <p className="text-sm text-slate-400">
+            {loading
+              ? "Caricamento quote…"
+              : "Nessuna opportunità disponibile"}
+          </p>
+          <p className="text-xs text-slate-600 mt-2">
+            Il sistema non genera dati simulati.
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-xs text-slate-500">
               <tr className="border-b border-white/10">
                 <th className="text-left p-4">Evento</th>
-                <th className="text-left p-4">Mercato</th>
-                <th className="text-left p-4">Provider</th>
+                <th className="text-left p-4">Bookmaker</th>
+                <th className="text-left p-4">Exchange</th>
                 <th className="text-right p-4">Back</th>
                 <th className="text-right p-4">Lay</th>
-                <th className="text-right p-4">ROI</th>
+                <th className="text-right p-4">Liability</th>
                 <th className="text-right p-4">Profitto</th>
+                <th className="text-right p-4">ROI</th>
                 <th className="text-center p-4">Azione</th>
               </tr>
             </thead>
 
             <tbody>
-              {filtered.map((o) => (
+              {opportunities.map((opportunity) => (
                 <tr
-                  key={o.id}
-                  className="border-b border-white/5 hover:bg-white/[.02]"
+                  key={opportunity.id}
+                  className="border-b border-white/5"
                 >
-                  <td className="p-4 font-medium">{o.event}</td>
-                  <td className="p-4 text-slate-400">{o.market}</td>
-
-                  <td className="p-4 text-slate-400">
-                    <div>{getBookmakerName(o.bookmakerId)}</div>
+                  <td className="p-4">
+                    <div className="font-medium">
+                      {opportunity.event}
+                    </div>
                     <div className="text-xs text-slate-500">
-                      {getExchangeName(o.exchangeId)}
+                      {opportunity.market} ·{" "}
+                      {opportunity.selection}
                     </div>
                   </td>
 
-                  <td className="p-4 text-right">
-                    {o.backOdds.toFixed(2)}
+                  <td className="p-4">
+                    {opportunity.bookmakerName}
+                  </td>
+
+                  <td className="p-4">
+                    {opportunity.exchangeName}
                   </td>
 
                   <td className="p-4 text-right">
-                    {o.layOdds.toFixed(2)}
+                    {opportunity.backOdds.toFixed(2)}
+                  </td>
+
+                  <td className="p-4 text-right">
+                    {opportunity.layOdds.toFixed(2)}
+                  </td>
+
+                  <td className="p-4 text-right">
+                    {eur(opportunity.liability)}
                   </td>
 
                   <td className="p-4 text-right text-emerald-400">
-                    {o.roi.toFixed(2)}%
+                    {eur(opportunity.estimatedProfit)}
                   </td>
 
                   <td className="p-4 text-right">
-                    {eur(o.estimatedProfit)}
+                    {opportunity.roi.toFixed(2)}%
                   </td>
+
                   <td className="p-4 text-center">
                     <button
-                      onClick={() => registerOperation(o)}
+                      onClick={() =>
+                        registerOperation(opportunity)
+                      }
                       className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium hover:bg-white/15"
                     >
                       Registra
@@ -154,8 +265,8 @@ export default function OpportunitiesSection() {
               ))}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

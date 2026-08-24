@@ -1,17 +1,30 @@
 import { findMatchedOpportunities } from "@/lib/matchedBetting/oddsMatcher";
 import { matchedBettingConfig } from "@/lib/config/matchedBetting";
-import { demoProvider } from "./demoProvider";
+import { getLiveQuotes } from "./quoteService";
 
-export async function getDemoOpportunities() {
-  const quotes = await demoProvider.getQuotes();
+export async function getLiveOpportunities(
+  backStake = matchedBettingConfig.defaultBackStake,
+  minimumRoiPct = matchedBettingConfig.minimumRoiPct
+) {
+  const { providerId, providerName, quotes } =
+    await getLiveQuotes();
 
-  return findMatchedOpportunities(quotes, {
-    exchangeCommissionPct:
-      matchedBettingConfig.defaultExchangeCommissionPct,
+  const opportunities = findMatchedOpportunities(
+    quotes,
+    {
+      exchangeCommissionPct:
+        matchedBettingConfig.defaultExchangeCommissionPct,
+      backStake,
+      minimumRoiPct,
+    }
+  );
 
-    backStake:
-      matchedBettingConfig.defaultBackStake,
-
-    minimumRoiPct: 0,
-  });
+  return {
+    mode: "live" as const,
+    providerId,
+    providerName,
+    retrievedAt: new Date().toISOString(),
+    quoteCount: quotes.length,
+    opportunities,
+  };
 }

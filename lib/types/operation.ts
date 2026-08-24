@@ -1,4 +1,8 @@
-export type OperationStatus = "OPEN" | "WON" | "LOST" | "CLOSED";
+export type OperationStatus =
+  | "OPEN"
+  | "WON"
+  | "LOST"
+  | "CLOSED";
 
 export type Operation = {
   id: string;
@@ -8,7 +12,10 @@ export type Operation = {
   market: string;
 
   bookmakerId: string;
+  bookmakerName: string;
+
   exchangeId: string;
+  exchangeName: string;
 
   backStake: number;
   backOdds: number;

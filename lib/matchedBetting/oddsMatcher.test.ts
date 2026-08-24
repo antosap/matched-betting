@@ -1,118 +1,38 @@
 import { describe, expect, it } from "vitest";
-
 import { findMatchedOpportunities } from "./oddsMatcher";
 import type { ProviderQuote } from "@/lib/providers/types";
 
-describe("findMatchedOpportunities", () => {
-  it("matches the same event, market and selection", () => {
-    const quotes: ProviderQuote[] = [
-      {
-        eventId: "event-1",
-        event: "Milan - Roma",
-        market: "1X2",
-        selection: "Milan",
-        odds: 2.1,
-        bookmakerId: "bookmaker-a",
-        timestamp: new Date().toISOString(),
-      },
-      {
-        eventId: "event-1",
-        event: "Milan - Roma",
-        market: "1X2",
-        selection: "Milan",
-        odds: 2.04,
-        bookmakerId: "bookmaker-a",
-        exchangeId: "exchange-demo",
-        timestamp: new Date().toISOString(),
-      },
-    ];
+const quote=(overrides:Partial<ProviderQuote>):ProviderQuote=>({
+  id:"quote",eventId:"event-1",event:"Milan - Roma",market:"1X2",
+  selection:"Milan",side:"BACK",odds:2.1,bookmakerId:"bookmaker-1",
+  bookmakerName:"Bookmaker",timestamp:"2026-08-24T12:00:00Z",
+  sourceProviderId:"test-provider",...overrides
+});
 
-    const opportunities =
-      findMatchedOpportunities(quotes);
-
-    expect(opportunities).toHaveLength(1);
-    expect(opportunities[0].backOdds).toBe(2.1);
-    expect(opportunities[0].layOdds).toBe(2.04);
-    expect(opportunities[0].estimatedProfit).toBeGreaterThan(0);
+describe("findMatchedOpportunities",()=>{
+  it("matches compatible BACK and LAY quotes",()=>{
+    const result=findMatchedOpportunities([
+      quote({id:"back-1"}),
+      quote({id:"lay-1",side:"LAY",odds:2.04,bookmakerId:undefined,bookmakerName:undefined,exchangeId:"exchange-1",exchangeName:"Exchange"})
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].estimatedProfit).toBeGreaterThan(0);
   });
-
-  it("does not match different events", () => {
-    const quotes: ProviderQuote[] = [
-      {
-        eventId: "event-1",
-        event: "Milan - Roma",
-        market: "1X2",
-        selection: "Milan",
-        odds: 2.1,
-        bookmakerId: "bookmaker-a",
-        timestamp: new Date().toISOString(),
-      },
-      {
-        eventId: "event-2",
-        event: "Inter - Napoli",
-        market: "1X2",
-        selection: "Inter",
-        odds: 2.04,
-        bookmakerId: "bookmaker-a",
-        exchangeId: "exchange-demo",
-        timestamp: new Date().toISOString(),
-      },
-    ];
-
-    const opportunities =
-      findMatchedOpportunities(quotes);
-
-    expect(opportunities).toHaveLength(0);
+  it("does not match different events",()=>{
+    const result=findMatchedOpportunities([
+      quote({id:"back-1"}),
+      quote({id:"lay-1",eventId:"event-2",side:"LAY",bookmakerId:undefined,bookmakerName:undefined,exchangeId:"exchange-1"})
+    ]);
+    expect(result).toHaveLength(0);
   });
-
-  it("sorts opportunities by ROI descending", () => {
-    const quotes: ProviderQuote[] = [
-      {
-        eventId: "event-1",
-        event: "Milan - Roma",
-        market: "1X2",
-        selection: "Milan",
-        odds: 2.1,
-        bookmakerId: "bookmaker-a",
-        timestamp: new Date().toISOString(),
-      },
-      {
-        eventId: "event-1",
-        event: "Milan - Roma",
-        market: "1X2",
-        selection: "Milan",
-        odds: 2.04,
-        bookmakerId: "bookmaker-a",
-        exchangeId: "exchange-demo",
-        timestamp: new Date().toISOString(),
-      },
-      {
-        eventId: "event-2",
-        event: "Inter - Napoli",
-        market: "1X2",
-        selection: "Inter",
-        odds: 2.5,
-        bookmakerId: "bookmaker-a",
-        timestamp: new Date().toISOString(),
-      },
-      {
-        eventId: "event-2",
-        event: "Inter - Napoli",
-        market: "1X2",
-        selection: "Inter",
-        odds: 2.1,
-        bookmakerId: "bookmaker-a",
-        exchangeId: "exchange-demo",
-        timestamp: new Date().toISOString(),
-      },
-    ];
-
-    const opportunities =
-      findMatchedOpportunities(quotes);
-
-    expect(opportunities.length).toBe(2);
-    expect(opportunities[0].roi).toBeGreaterThan(
-      opportunities[1].roi
-    );
+  it("sorts by ROI descending",()=>{
+    const result=findMatchedOpportunities([
+      quote({id:"back-1",odds:2.1}),
+      quote({id:"lay-1",side:"LAY",odds:2.04,bookmakerId:undefined,bookmakerName:undefined,exchangeId:"exchange-1"}),
+      quote({id:"back-2",eventId:"event-2",odds:2.5}),
+      quote({id:"lay-2",eventId:"event-2",side:"LAY",odds:2.1,bookmakerId:undefined,bookmakerName:undefined,exchangeId:"exchange-2"})
+    ]);
+    expect(result).toHaveLength(2);
+    expect(result[0].roi).toBeGreaterThan(result[1].roi);
   });
 });

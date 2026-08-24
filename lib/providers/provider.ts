@@ -3,6 +3,6 @@ import type { ProviderQuote } from "./types";
 export interface BettingProvider {
   id: string;
   name: string;
-
-  getQuotes(): Promise<ProviderQuote[]>;
+  kind: "AGGREGATOR" | "BOOKMAKER" | "EXCHANGE";
+  getQuotes(signal?: AbortSignal): Promise<ProviderQuote[]>;
 }

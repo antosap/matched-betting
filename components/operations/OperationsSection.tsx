@@ -8,17 +8,12 @@ import {
   deleteOperation,
   getOperations,
 } from "@/lib/storage/operations";
-import {
-  getBookmakerName,
-  getExchangeName,
-} from "@/lib/data/bettingProviders";
 
-function eur(value: number) {
-  return new Intl.NumberFormat("it-IT", {
+const eur = (value: number) =>
+  new Intl.NumberFormat("it-IT", {
     style: "currency",
     currency: "EUR",
   }).format(value);
-}
 
 function statusLabel(status: Operation["status"]) {
   switch (status) {
@@ -34,7 +29,8 @@ function statusLabel(status: Operation["status"]) {
 }
 
 export default function OperationsSection() {
-  const [operations, setOperations] = useState<Operation[]>([]);
+  const [operations, setOperations] =
+    useState<Operation[]>([]);
 
   useEffect(() => {
     setOperations(getOperations());
@@ -46,39 +42,32 @@ export default function OperationsSection() {
   }
 
   const totalProfit = operations.reduce(
-    (sum, operation) => sum + operation.estimatedProfit,
+    (sum, operation) =>
+      sum + operation.estimatedProfit,
     0
   );
 
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-          <div className="text-xs text-slate-500">
-            Operazioni
-          </div>
-          <div className="text-2xl font-semibold mt-1">
-            {operations.length}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-          <div className="text-xs text-slate-500">
-            Operazioni aperte
-          </div>
-          <div className="text-2xl font-semibold mt-1">
-            {operations.filter((o) => o.status === "OPEN").length}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
-          <div className="text-xs text-slate-500">
-            Profitto stimato
-          </div>
-          <div className="text-2xl font-semibold mt-1 text-emerald-400">
-            {eur(totalProfit)}
-          </div>
-        </div>
+        <Card
+          label="Operazioni"
+          value={String(operations.length)}
+        />
+        <Card
+          label="Operazioni aperte"
+          value={String(
+            operations.filter(
+              (operation) =>
+                operation.status === "OPEN"
+            ).length
+          )}
+        />
+        <Card
+          label="Profitto stimato"
+          value={eur(totalProfit)}
+          highlight
+        />
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-white/[.03] overflow-hidden">
@@ -86,9 +75,8 @@ export default function OperationsSection() {
           <h2 className="font-semibold">
             Operazioni
           </h2>
-
           <p className="text-xs text-slate-500 mt-1">
-            Registro delle operazioni di matched betting
+            Registro locale delle operazioni.
           </p>
         </div>
 
@@ -97,48 +85,20 @@ export default function OperationsSection() {
             <p className="text-sm text-slate-400">
               Nessuna operazione registrata
             </p>
-
-            <p className="text-xs text-slate-600 mt-2">
-              Registra un'opportunità per visualizzarla qui.
-            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-xs text-slate-500">
                 <tr className="border-b border-white/10">
-                  <th className="text-left p-4">
-                    Evento
-                  </th>
-
-                  <th className="text-left p-4">
-                    Provider
-                  </th>
-
-                  <th className="text-right p-4">
-                    Back
-                  </th>
-
-                  <th className="text-right p-4">
-                    Lay
-                  </th>
-
-                  <th className="text-right p-4">
-                    Liability
-                  </th>
-
-                  <th className="text-right p-4">
-                    Profitto
-                  </th>
-
-                  <th className="text-right p-4">
-                    ROI
-                  </th>
-
-                  <th className="text-center p-4">
-                    Stato
-                  </th>
-
+                  <th className="text-left p-4">Evento</th>
+                  <th className="text-left p-4">Provider</th>
+                  <th className="text-right p-4">Back</th>
+                  <th className="text-right p-4">Lay</th>
+                  <th className="text-right p-4">Liability</th>
+                  <th className="text-right p-4">Profitto</th>
+                  <th className="text-right p-4">ROI</th>
+                  <th className="text-center p-4">Stato</th>
                   <th className="p-4" />
                 </tr>
               </thead>
@@ -153,7 +113,6 @@ export default function OperationsSection() {
                       <div className="font-medium">
                         {operation.event}
                       </div>
-
                       <div className="text-xs text-slate-500 mt-1">
                         {operation.market}
                       </div>
@@ -161,15 +120,10 @@ export default function OperationsSection() {
 
                     <td className="p-4 text-slate-400">
                       <div>
-                        {getBookmakerName(
-                          operation.bookmakerId
-                        )}
+                        {operation.bookmakerName}
                       </div>
-
                       <div className="text-xs text-slate-500">
-                        {getExchangeName(
-                          operation.exchangeId
-                        )}
+                        {operation.exchangeName}
                       </div>
                     </td>
 
@@ -222,6 +176,31 @@ export default function OperationsSection() {
             </table>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function Card({
+  label,
+  value,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
+      <div className="text-xs text-slate-500">
+        {label}
+      </div>
+      <div
+        className={`text-2xl font-semibold mt-1 ${
+          highlight ? "text-emerald-400" : ""
+        }`}
+      >
+        {value}
       </div>
     </div>
   );
