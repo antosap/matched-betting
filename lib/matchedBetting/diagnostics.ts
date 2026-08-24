@@ -24,9 +24,9 @@ function countProviders(quotes: ProviderQuote[], side: "BACK" | "LAY") {
       count: (old?.count ?? 0) + 1
     });
   }
-  return [...counts.entries()]
+  return Array.from(counts.entries())
     .map(([id, v]) => ({ id, ...v }))
-    .sort((a,b) => b.count-a.count);
+    .sort((a, b) => b.count - a.count);
 }
 
 function sameMarket(a: ProviderQuote, b: ProviderQuote) {
